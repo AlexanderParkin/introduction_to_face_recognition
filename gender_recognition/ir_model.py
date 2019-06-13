@@ -211,7 +211,7 @@ class Backbone(Module):
 def IR_50(input_size, output_size):
     """Constructs a ir-50 model.
     """
-    model = Backbone(input_size, output_size, 50, 'ir')
+    model = Backbone(input_size, output_size, 50, 'ir',pretrained_path=None)
 
     return model
 

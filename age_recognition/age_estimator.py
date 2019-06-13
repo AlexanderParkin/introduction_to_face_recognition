@@ -29,6 +29,6 @@ class AgeEstimator(object):
         with torch.no_grad():
             output = self.model(input_tensor)
             print(output)
-            predicted_age = output.squeeze().cpu().numpy()[0]
+            predicted_age = output.squeeze().cpu().numpy()
 
         return predicted_age
