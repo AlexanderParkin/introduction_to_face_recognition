@@ -8,7 +8,8 @@ from .first_stage import run_first_stage
 
 def detect_faces(image, min_face_size=20.0,
                  thresholds=[0.6, 0.7, 0.8],
-                 nms_thresholds=[0.7, 0.7, 0.7]):
+                 nms_thresholds=[0.7, 0.7, 0.7],
+                 device='cpu'):
     """
     Arguments:
         image: an instance of PIL.Image.
@@ -22,9 +23,9 @@ def detect_faces(image, min_face_size=20.0,
     """
 
     # LOAD MODELS
-    pnet = PNet().to('cuda')
-    rnet = RNet().to('cuda')
-    onet = ONet().to('cuda')
+    pnet = PNet().to(device)
+    rnet = RNet().to(device)
+    onet = ONet().to(device)
     onet.eval()
 
     # BUILD AN IMAGE PYRAMID
@@ -77,7 +78,7 @@ def detect_faces(image, min_face_size=20.0,
 
     img_boxes = get_image_boxes(bounding_boxes, image, size=24)
     with torch.no_grad():
-    	img_boxes = torch.FloatTensor(img_boxes).to('cuda')
+    	img_boxes = torch.FloatTensor(img_boxes).to(device)
     	output = rnet(img_boxes)
     offsets = output[0].cpu().data.numpy()  # shape [n_boxes, 4]
     probs = output[1].cpu().data.numpy()  # shape [n_boxes, 2]
@@ -99,7 +100,7 @@ def detect_faces(image, min_face_size=20.0,
     if len(img_boxes) == 0: 
         return [], []
     with torch.no_grad():
-    	img_boxes = torch.FloatTensor(img_boxes).to('cuda')
+    	img_boxes = torch.FloatTensor(img_boxes).to(device)
     	output = onet(img_boxes)
     landmarks = output[0].cpu().data.numpy()  # shape [n_boxes, 10]
     offsets = output[1].cpu().data.numpy()  # shape [n_boxes, 4]

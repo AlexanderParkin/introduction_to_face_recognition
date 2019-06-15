@@ -5,14 +5,16 @@ from src.box_utils import nms, calibrate_box, get_image_boxes, convert_to_square
 from src.first_stage import run_first_stage
 
 class Detector(object):
-    def __init__(self, device = 'cuda',
+    def __init__(self, device='cpu',
                  min_face_size=48.0,
                  thresholds=[0.6, 0.7, 0.8],
-                 nms_thresholds=[0.7, 0.7, 0.7]):
+                 nms_thresholds=[0.7, 0.7, 0.7],
+                 weights_prefix_path='./'):
 
-        self.pnet = PNet().to('cuda')
-        self.rnet = RNet().to('cuda')
-        self.onet = ONet().to('cuda')
+        self.device = device
+        self.pnet = PNet(weights_prefix_path).to(self.device)
+        self.rnet = RNet(weights_prefix_path).to(self.device)
+        self.onet = ONet(weights_prefix_path).to(self.device)
         self.onet.eval()
 
         self.min_face_size = min_face_size
@@ -49,7 +51,11 @@ class Detector(object):
 
         # run P-Net on different scales
         for s in scales:
-            boxes = run_first_stage(image, self.pnet, scale=s, threshold=self.thresholds[0])
+            boxes = run_first_stage(image, 
+                self.pnet, 
+                scale=s, 
+                threshold=self.thresholds[0],
+                device=self.device)
             bounding_boxes.append(boxes)
 
         # collect boxes (and offsets, and scores) from different scales
@@ -73,7 +79,7 @@ class Detector(object):
 
         img_boxes = get_image_boxes(bounding_boxes, image, size=24)
         with torch.no_grad():
-            img_boxes = torch.FloatTensor(img_boxes).to('cuda')
+            img_boxes = torch.FloatTensor(img_boxes).to(self.device)
             output = self.rnet(img_boxes)
         offsets = output[0].cpu().data.numpy()  # shape [n_boxes, 4]
         probs = output[1].cpu().data.numpy()  # shape [n_boxes, 2]
@@ -95,7 +101,7 @@ class Detector(object):
         if len(img_boxes) == 0: 
             return [], []
         with torch.no_grad():
-            img_boxes = torch.FloatTensor(img_boxes).to('cuda')
+            img_boxes = torch.FloatTensor(img_boxes).to(self.device)
             output = self.onet(img_boxes)
         landmarks = output[0].cpu().data.numpy()  # shape [n_boxes, 10]
         offsets = output[1].cpu().data.numpy()  # shape [n_boxes, 4]

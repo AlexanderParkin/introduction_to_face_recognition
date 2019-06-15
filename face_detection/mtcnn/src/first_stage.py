@@ -6,7 +6,7 @@ import numpy as np
 from .box_utils import nms, _preprocess
 
 
-def run_first_stage(image, net, scale, threshold):
+def run_first_stage(image, net, scale, threshold, device):
     """Run P-Net, generate bounding boxes, and do NMS.
 
     Arguments:
@@ -30,7 +30,7 @@ def run_first_stage(image, net, scale, threshold):
     img = np.asarray(img, 'float32')
 
     with torch.no_grad():
-        img = torch.FloatTensor(_preprocess(img)).to('cuda')
+        img = torch.FloatTensor(_preprocess(img)).to(device)
         output = net(img)
     probs = output[1].cpu().data.numpy()[0, 1, :, :]
     offsets = output[0].cpu().data.numpy()
